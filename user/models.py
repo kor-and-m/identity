@@ -1,5 +1,7 @@
 from django.db import models
 import uuid
+import random
+import string
 from django.conf import settings
 from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
@@ -31,6 +33,8 @@ class UserManager(BaseUserManager):
             raise ValueError('The given email must be set')
         email = self.normalize_email(email)
         user = self.model(email=email, **extra_fields)
+        if password is None:
+            password = ''.join([random.choice(string.ascii_letters + string.digits) for n in range(8)])
         user.set_password(password)
         user.save(using=self._db)
         if not groups is None:
@@ -40,7 +44,7 @@ class UserManager(BaseUserManager):
         Profile.objects.create(user=user, **extra_fields)
         return user
 
-    def create_user(self, email, groups=["student"], password=None, **extra_fields):
+    def create_user(self, email, groups=[], password=None, **extra_fields):
         return self._create_user(email, password, groups, **extra_fields)
 
     def create_superuser(self, email, password, **extra_fields):
