@@ -89,7 +89,7 @@ class RegistrationView(APIView):
     def post(request):
         email = request.JSON.get('email', None)
         password = request.JSON.get('password', None)
-        iss = request.JSON.get('iss', None)
+        iss = request.JSON.get('scope_name', None)
         back_url = request.JSON.get('back_url', '/')
 
         if email is None:
