@@ -5,6 +5,10 @@ from rest_framework.views import APIView
 from django.conf import settings
 from django.contrib import auth
 import base64
+import jwt
+from datetime import datetime, timedelta, timezone
+from django.core.mail import EmailMessage
+
 
 from django.contrib.auth import get_user_model
 
@@ -23,13 +27,13 @@ class LoginView(APIView):
         content_type = 'application/json'
 
         if email is None:
-        	return Response("Не передан email", status=400, content_type=content_type)
+            return Response("Не передан email", status=400, content_type=content_type)
 
         if scope_name is None:
-        	return Response("Не передан scope_name", status=400, content_type=content_type)
+            return Response("Не передан scope_name", status=400, content_type=content_type)
 
         if password is None:
-        	return Response("Не передан password", status=400, content_type=content_type)
+            return Response("Не передан password", status=400, content_type=content_type)
 
         user = auth.authenticate(email=email.lower(), password=password)
 
@@ -41,54 +45,94 @@ class LoginView(APIView):
         except Scope.DoesNotExist:
             return Response("Не зарегестрированно такое приложение", status=404, content_type=content_type)
 
-        response = Response(scope.set_token(user), status=201, content_type=content_type)
+        response = Response(scope.set_token(user), status=200, content_type=content_type)
 
         return response
 
 
-class LogoutView(APIView):
+class RegistrationView(APIView): 
     renderer_classes = (JSONRenderer, BrowsableAPIRenderer)
 
     @staticmethod
+    def get(request):
+        jwt_token = request.GET.get('token', None)
+
+        if jwt_token is None:
+            return Response('token не передан', status=400)
+
+        headers = json.loads(base64.b64decode(token_decoded[0]))
+        payload_string = token_decoded[1]
+        payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
+        payload = json.loads(base64.b64decode(payload_string))
+        alg = headers['alg']
+        iss = payload['iss']
+
+        try:
+            scope = Scope.objects.get(name=iss)
+        except Scope.DoesNotExist:
+            return Response('Приложение не найдено', status=404)
+
+        payload = jwt.decode(jwt_token, scope.secret, algorithms=[alg], audience='identity_server')
+
+        if int(payload['exp']) < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
+            return Response('Ссылка просроченв', status=403)
+
+        try:
+            user = get_user_model.objects.get(email=payload['email'].lower())
+            return Response(scope.set_token(user), status=200)
+        except get_user_model().DoesNotExist:
+            user = get_user_model.objects.create_user(email=payload['email'].lower(), password=payload['password'])
+            return Response(scope.set_token(user), status=201)
+
+
+    @staticmethod
     def post(request):
-        response = Response(status=204)
-        if request.user.is_authenticated:
-            response.delete_cookie('AUTH_COOKIE')
-        return response
+        email = request.JSON.get('email', None)
+        password = request.JSON.get('password', None)
+        iss = request.JSON.get('iss', None)
+        back_url = request.JSON.get('back_url', '/')
+
+        if email is None:
+            return Response('email не передан', status=400)
+
+        if iss is None:
+            return Response('iss не передан', status=400)
+
+        if password is None:
+            return Response('password не передан', status=400)
+
+        if get_user_model().objects.filter(email=email.lower()).exists():
+            return Response('Пользователь с таким email уже зарегистрирован', status=403)
+
+        try:
+            scope = Scope.objects.get(name=iss)
+        except Scope.DoesNotExist:
+            return Response('Приложение не найдено', 404)
+
+        token = jwt.encode({
+            'aud': 'identity_server',
+            'iss': iss,
+            'exp': int((datetime.now() + timedelta(hours=24)).replace(tzinfo=timezone.utc).timestamp()),
+            'email': email.lower(),
+            'password': password,
+        }, scope.secret, algorithm='HS256')
+
+        body = {
+            "subject": 'Подтвердите регистрацию',
+            "body": '''
+                Ваш пароль (он будет действителен после активации по ссылке) %s 
+                для подтверждения регистрации перейдите по ссылке
+                %s%s?token=%s она действительна
+                в течении суток''' % (scope.domain, back_url, password, token),
+                "from_email": 'gussman@gmail.com',
+                "to": [email],
+            }
+
+        msg = EmailMessage(
+            **body
+        )
+        msg.send()
 
 
-# auth
-
-# class RegistrationView(APIView): 
-#     renderer_classes = (JSONRenderer,)
-
-#     @staticmethod
-#     def get(request):
-#         try:
-#             invite = Invite.objects.get(hash=request.GET['hash'])
-#             invite.owner.is_active = True
-#             invite.owner.save()
-#             auth.login(request, invite.owner)
-#             invite.delete()
-#             return redirect('/')
-#         except Invite.DoesNotExist:
-#             return Response('Приглошения не существует возможно оно сгорело', status=404)
-
-#     @staticmethod
-#     def post(request):
-#     	base64.b64decode(settings.SECRET_KEY)
-#     	settings.SECRET_KEY
-#     	email=request.JSON['email'].lower()
-#     	password = request.JSON.get('password')
-#         if password:
-#             user = get_user_model().objects.create_user(
-#                 email=email,
-#                 password=password,
-#             )
-#         else:
-#             user = get_user_model().objects.create_user(
-#                 email=email,
-#             )
-
-#         return Response(UserSelfSerializer(user).data, status=200)
-
+        return Response(status=204)
+        
