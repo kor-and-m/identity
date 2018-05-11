@@ -128,7 +128,7 @@ class RegistrationView(APIView):
                 для подтверждения регистрации перейдите по ссылке
                 %s%s?token=%s она действительна
                 в течении суток''' % (password, scope.domain, back_url, token),
-                "from_email": 'gussman@gmail.com',
+                "from_email": 'gussman7777@gmail.com',
                 "to": [email],
             }
 

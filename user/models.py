@@ -45,7 +45,7 @@ class UserManager(BaseUserManager):
         body = {
             "subject": 'Спасибо за регистрацию',
             "body": '''вы были успешно зарегистрированны''',
-            "from_email": 'gussman@gmail.com',
+            "from_email": 'gussman7777@gmail.com',
             "to": [email],
         }
 
