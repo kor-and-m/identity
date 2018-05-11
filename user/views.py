@@ -76,7 +76,7 @@ class RegistrationView(APIView):
         except Scope.DoesNotExist:
             return Response('Приложение не найдено', status=404)
 
-        payload = jwt.decode(jwt_token, scope.secret, algorithms=[alg], audience='identity_server')
+        payload = jwt.decode(jwt_token, str(scope.secret), algorithms=[alg], audience='identity_server')
 
         if int(payload['exp']) < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
             return Response('Ссылка просроченв', status=403)
