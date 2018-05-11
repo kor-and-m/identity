@@ -63,7 +63,7 @@ class RegistrationView(APIView):
 
         token_decoded = jwt_token.split('.')
 
-        headers = json.loads(base64.b64decode(token_decoded[0]))
+        headers = json.loads(base64.b64decode(str(token_decoded[0])))
         payload_string = token_decoded[1]
         payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
         payload = json.loads(base64.b64decode(payload_string))
