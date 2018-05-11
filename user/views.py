@@ -61,6 +61,8 @@ class RegistrationView(APIView):
         if jwt_token is None:
             return Response('token не передан', status=400)
 
+        token_decoded = jwt_token.split('.')
+
         headers = json.loads(base64.b64decode(token_decoded[0]))
         payload_string = token_decoded[1]
         payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
