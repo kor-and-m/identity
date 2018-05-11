@@ -6,6 +6,7 @@ from django.conf import settings
 from django.contrib import auth
 import base64
 import jwt
+import json
 from datetime import datetime, timedelta, timezone
 from django.core.mail import EmailMessage
 
