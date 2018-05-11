@@ -115,7 +115,7 @@ class RegistrationView(APIView):
             'exp': int((datetime.now() + timedelta(hours=24)).replace(tzinfo=timezone.utc).timestamp()),
             'email': email.lower(),
             'password': password,
-        }, scope.secret, algorithm='HS256')
+        }, str(scope.secret), algorithm='HS256')
 
         body = {
             "subject": 'Подтвердите регистрацию',
