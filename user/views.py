@@ -82,10 +82,10 @@ class RegistrationView(APIView):
             return Response('Ссылка просроченв', status=403)
 
         try:
-            user = get_user_model.objects.get(email=payload['email'].lower())
+            user = get_user_model().objects.get(email=payload['email'].lower())
             return Response(scope.set_token(user), status=200)
         except get_user_model().DoesNotExist:
-            user = get_user_model.objects.create_user(email=payload['email'].lower(), password=payload['password'])
+            user = get_user_model().objects.create_user(email=payload['email'].lower(), password=payload['password'])
             return Response(scope.set_token(user), status=201)
 
 
