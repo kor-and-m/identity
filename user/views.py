@@ -67,7 +67,7 @@ class RegistrationView(APIView):
         headers = json.loads(headers_string)
         payload_string = token_decoded[1]
         payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
-        payload = json.loads(base64.b64decode(payload_string))
+        payload = json.loads(base64.b64decode(payload_string).decode('utf-8'))
         alg = headers['alg']
         iss = payload['iss']
 
