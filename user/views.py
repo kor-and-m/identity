@@ -86,18 +86,9 @@ class RegistrationView(APIView):
 
         headers_string = base64.b64decode(token_decoded[0]).decode('utf-8')
         headers = json.loads(headers_string)
-        payload_string = token_decoded[1]
-        payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
-        payload = json.loads(base64.b64decode(payload_string).decode('utf-8'))
         alg = headers['alg']
-        iss = payload['iss']
 
-        try:
-            scope = Scope.objects.get(title=iss)
-        except Scope.DoesNotExist:
-            return Response('Приложение не найдено', status=404)
-
-        payload = jwt.decode(jwt_token, str(scope.secret), algorithms=[alg], audience='identity_server')
+        payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[alg], audience='identity_server')
 
         if int(payload['exp']) < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
             return Response('Ссылка просроченв', status=403)
@@ -105,6 +96,7 @@ class RegistrationView(APIView):
         try:
             user = get_user_model().objects.get(email=payload['email'].lower())
             return Response(scope.set_token(user), status=200)
+            
         except get_user_model().DoesNotExist:
             user = get_user_model().objects.create_user(email=payload['email'].lower(), password=payload['password'])
             return Response(scope.set_token(user), status=201)
@@ -114,13 +106,9 @@ class RegistrationView(APIView):
     def post(request):
         email = request.JSON.get('email', None)
         password = request.JSON.get('password', None)
-        iss = request.JSON.get('scope_name', None)
 
         if email is None:
             return Response('email не передан', status=400)
-
-        if iss is None:
-            return Response('iss не передан', status=400)
 
         if password is None:
             return Response('password не передан', status=400)
@@ -128,14 +116,9 @@ class RegistrationView(APIView):
         if get_user_model().objects.filter(email=email.lower()).exists():
             return Response('Пользователь с таким email уже зарегистрирован', status=403)
 
-        try:
-            scope = Scope.objects.get(title=iss)
-        except Scope.DoesNotExist:
-            return Response('Приложение не найдено', 404)
-
         token = jwt.encode({
             'aud': 'identity_server',
-            'iss': iss,
+            'iss': 'identity_server',
             'exp': int((datetime.now() + timedelta(hours=24)).replace(tzinfo=timezone.utc).timestamp()),
             'email': email.lower(),
             'password': password,
@@ -147,7 +130,7 @@ class RegistrationView(APIView):
                 Ваш пароль (он будет действителен после активации по ссылке) %s 
                 для подтверждения регистрации перейдите по ссылке
                 /api/auth/registration/?token=%s она действительна
-                в течении суток''' % (password, scope.back_url, token),
+                в течении суток''' % (password, token),
                 "from_email": 'gussman7777@gmail.com',
                 "to": [email],
             }
