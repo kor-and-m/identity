@@ -3,7 +3,7 @@
 from django.contrib.auth import get_user_model
 from rest_framework import authentication
 from rest_framework import exceptions
-from scopes.models import Scope
+
 import jwt
 import base64
 import json
@@ -33,8 +33,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         if payload['exp'] is None:
             return None
 
-        if int(payload['exp']) \
-            < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
+        if int(payload['exp']) < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
             return None
 
         try:
