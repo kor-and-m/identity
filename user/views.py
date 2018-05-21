@@ -9,6 +9,7 @@ import jwt
 import json
 from datetime import datetime, timedelta, timezone
 from django.core.mail import EmailMessage
+from django.shortcuts import redirect
 
 
 from django.contrib.auth import get_user_model
@@ -23,32 +24,52 @@ class LoginView(APIView):
     @staticmethod
     def post(request):
         password = request.JSON.get('password', None)
-        scope_name = request.JSON.get('scope_name', None)
         email = request.JSON.get('email', None)
-        content_type = 'application/json'
 
         if email is None:
-            return Response("Не передан email", status=400, content_type=content_type)
-
-        if scope_name is None:
-            return Response("Не передан scope_name", status=400, content_type=content_type)
+            return Response("Не передан email", status=400)
 
         if password is None:
-            return Response("Не передан password", status=400, content_type=content_type)
+            return Response("Не передан password", status=400)
 
         user = auth.authenticate(email=email.lower(), password=password)
 
         if not user:
-            return Response("Неверный логин или пароль", status=403, content_type=content_type)
+            return Response("Неверный логин или пароль", status=403)
 
-        try:
-            scope = Scope.objects.get(name=scope_name)
-        except Scope.DoesNotExist:
-            return Response("Не зарегестрированно такое приложение", status=404, content_type=content_type)
+        token = jwt.encode({
+            'iss': 'identity_server',
+            'aud': 'identity_server',
+            'exp': int((datetime.now() + timedelta(hours=720)).replace(tzinfo=timezone.utc).timestamp()),
+            'out_key': str(user.out_key),
+            'email': user.email,
+            'roles': [i.name for i in user.groups.all()],
+        }, settings.SECRET_KEY, algorithm='HS256')
 
-        response = Response(scope.set_token(user), status=200, content_type=content_type)
+        response = Response(token, status=200)
 
         return response
+
+
+class SetTokenView(APIView):
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer)
+
+    @staticmethod
+    def get(request):
+        scope_name = request.GET.get('scope_name', None)
+
+        if scope_name is None:
+            return redirect('/')
+
+        if not request.user.is_authenticated:
+            return redirect('/')
+
+        try:
+            scope=Scope.objects.get(name=scope_name)
+        except Scope.DoesNotExist:
+            return redirect('/')
+
+        return redirect('%s?token=%s' % (scope.back_url, scope.set_token(request.user)))
 
 
 class RegistrationView(APIView): 
@@ -94,7 +115,6 @@ class RegistrationView(APIView):
         email = request.JSON.get('email', None)
         password = request.JSON.get('password', None)
         iss = request.JSON.get('scope_name', None)
-        back_url = request.JSON.get('back_url', '/')
 
         if email is None:
             return Response('email не передан', status=400)
@@ -119,15 +139,15 @@ class RegistrationView(APIView):
             'exp': int((datetime.now() + timedelta(hours=24)).replace(tzinfo=timezone.utc).timestamp()),
             'email': email.lower(),
             'password': password,
-        }, str(scope.secret), algorithm='HS256')
+        }, settings.SECRET_KEY, algorithm='HS256')
 
         body = {
             "subject": 'Подтвердите регистрацию',
             "body": '''
                 Ваш пароль (он будет действителен после активации по ссылке) %s 
                 для подтверждения регистрации перейдите по ссылке
-                %s%s?token=%s она действительна
-                в течении суток''' % (password, scope.domain, back_url, token),
+                /api/auth/registration/?token=%s она действительна
+                в течении суток''' % (password, scope.back_url, token),
                 "from_email": 'gussman7777@gmail.com',
                 "to": [email],
             }
