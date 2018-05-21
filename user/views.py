@@ -79,8 +79,10 @@ class RegistrationView(APIView):
     def get(request):
         jwt_token = request.GET.get('token', None)
 
+        response = redirect('/')
+
         if jwt_token is None:
-            return Response('token не передан', status=400)
+            return response
 
         token_decoded = jwt_token.split('.')
 
@@ -91,7 +93,7 @@ class RegistrationView(APIView):
         payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[alg], audience='identity_server')
 
         if int(payload['exp']) < int(datetime.now().replace(tzinfo=timezone.utc).timestamp()):
-            return Response('Ссылка просроченв', status=403)
+            return response
 
         try:
             user = get_user_model().objects.get(email=payload['email'].lower())
@@ -107,7 +109,6 @@ class RegistrationView(APIView):
             'email': user.email,
             'roles': [i.name for i in user.groups.all()],
         }, settings.SECRET_KEY, algorithm='HS256')
-        response = redirect('/')
         response.set_cookie('AUTH_COOKIE', token)
         return response
 
