@@ -52,8 +52,12 @@ class UserManager(BaseUserManager):
         msg = EmailMessage(
             **body
         )
-        msg.send()
 
+        try:
+            msg.send()
+        except Exception as e:
+            pass
+        
         Profile.objects.create(user=user, **extra_fields)
         return user
 

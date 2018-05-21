@@ -4,6 +4,8 @@ from rest_framework import exceptions
 from scopes.models import Scope
 import jwt, base64, json
 from datetime import datetime, timezone
+from django.conf import settings
+
 
 class JWTAuthentication(authentication.BaseAuthentication):
     def authenticate(self, request):
@@ -17,18 +19,9 @@ class JWTAuthentication(authentication.BaseAuthentication):
             return None
 
         headers = json.loads(base64.b64decode(token_decoded[0]))
-        payload_string = token_decoded[1]
-        payload_string += "=" * ((4 - len(payload_string) % 4) % 4)
-        payload = json.loads(base64.b64decode(payload_string))
         alg = headers['alg']
-        iss = payload['iss']
 
-        try:
-            scope = Scope.objects.get(name=iss)
-        except Scope.DoesNotExist:
-            return None
-
-        payload = jwt.decode(jwt_token, str(scope.secret), algorithms=[alg], audience='identity_server')
+        payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[alg], audience='identity_server')
 
         if payload['exp'] is None:
             return None
