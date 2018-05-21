@@ -107,7 +107,9 @@ class RegistrationView(APIView):
             'email': user.email,
             'roles': [i.name for i in user.groups.all()],
         }, settings.SECRET_KEY, algorithm='HS256')
-        return Response(token, status=201)
+        response = redirect('/')
+        response.set_cookie('AUTH_COOKIE', token)
+        return response
 
 
     @staticmethod
