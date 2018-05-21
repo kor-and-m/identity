@@ -141,7 +141,7 @@ class RegistrationView(APIView):
                 Ваш пароль (он будет действителен после активации по ссылке) %s 
                 для подтверждения регистрации перейдите по ссылке
                 http://82.146.43.125/api/auth/registration/?token=%s она действительна
-                в течении суток''' % (password, token),
+                в течении суток''' % (password, token.decode("utf-8")),
                 "from_email": 'gussman7777@gmail.com',
                 "to": [email],
             }
