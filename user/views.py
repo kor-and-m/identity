@@ -95,11 +95,19 @@ class RegistrationView(APIView):
 
         try:
             user = get_user_model().objects.get(email=payload['email'].lower())
-            return Response(scope.set_token(user), status=200)
-            
+
         except get_user_model().DoesNotExist:
             user = get_user_model().objects.create_user(email=payload['email'].lower(), password=payload['password'])
-            return Response(scope.set_token(user), status=201)
+
+        token = jwt.encode({
+            'iss': 'identity_server',
+            'aud': 'identity_server',
+            'exp': int((datetime.now() + timedelta(hours=720)).replace(tzinfo=timezone.utc).timestamp()),
+            'out_key': str(user.out_key),
+            'email': user.email,
+            'roles': [i.name for i in user.groups.all()],
+        }, settings.SECRET_KEY, algorithm='HS256')
+        return Response(token, status=201)
 
 
     @staticmethod
