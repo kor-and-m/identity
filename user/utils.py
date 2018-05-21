@@ -18,7 +18,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
         if not len(token_decoded) == 3:
             return None
 
-        headers = json.loads(base64.b64decode(token_decoded[0]))
+        headers = json.loads(base64.b64decode(token_decoded[0]).decode("utf-8"))
         alg = headers['alg']
 
         payload = jwt.decode(jwt_token, settings.SECRET_KEY, algorithms=[alg], audience='identity_server')
