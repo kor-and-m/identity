@@ -93,7 +93,7 @@ class RegistrationView(APIView):
         iss = payload['iss']
 
         try:
-            scope = Scope.objects.get(name=iss)
+            scope = Scope.objects.get(title=iss)
         except Scope.DoesNotExist:
             return Response('Приложение не найдено', status=404)
 
