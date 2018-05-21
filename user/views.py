@@ -129,7 +129,7 @@ class RegistrationView(APIView):
             return Response('Пользователь с таким email уже зарегистрирован', status=403)
 
         try:
-            scope = Scope.objects.get(name=iss)
+            scope = Scope.objects.get(title=iss)
         except Scope.DoesNotExist:
             return Response('Приложение не найдено', 404)
 
