@@ -35,8 +35,7 @@ class JWTAuthentication(authentication.BaseAuthentication):
             return None
 
         try:
-            user = \
-                get_user_model().objects.get(out_key=payload['out_key'])
+            user = get_user_model().objects.get(out_key=payload['out_key'])
         except get_user_model().DoesNotExist:
             raise exceptions.AuthenticationFailed('No such user')
 
