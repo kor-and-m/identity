@@ -1,3 +1,22 @@
-from django.shortcuts import render
+from rest_framework.renderers import JSONRenderer, BrowsableAPIRenderer
+from rest_framework.response import Response
+from rest_framework.views import APIView
+from django.conf import settings
 
-# Create your views here.
+from django.contrib.auth import get_user_model
+
+from scopes.serializers import ScopeSerializer
+from scopes.models import Scope
+
+
+class ScopesView(APIView):
+    renderer_classes = (JSONRenderer, BrowsableAPIRenderer)
+
+    @staticmethod
+    def get(request):
+        return Response([ScopeSerializer(scope).data for scope in Scope.objects.all()], status=200)
+
+    @staticmethod
+    def post(request):
+        scope = ScopeSerializer().create(request.POST)
+        return Response(scope, status=200)

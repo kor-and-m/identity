@@ -7,6 +7,7 @@ from django.contrib.auth.models import PermissionsMixin
 from django.contrib.auth.base_user import AbstractBaseUser
 from django.utils.translation import ugettext_lazy as _
 from django.contrib.auth.base_user import BaseUserManager
+from django.core.mail import EmailMessage
 
 
 class Profile(models.Model):
@@ -41,6 +42,22 @@ class UserManager(BaseUserManager):
         	for g in Role.objects.filter(name__in=groups):
         		user.groups.add(g)
 
+        body = {
+            "subject": 'Спасибо за регистрацию',
+            "body": '''вы были успешно зарегистрированны''',
+            "from_email": 'gussman7777@gmail.com',
+            "to": [email],
+        }
+
+        msg = EmailMessage(
+            **body
+        )
+
+        try:
+            msg.send()
+        except Exception as e:
+            pass
+        
         Profile.objects.create(user=user, **extra_fields)
         return user
 

@@ -24,13 +24,14 @@ SECRET_KEY = '812(8*eh_y3!9zelz$s%l)gkk8i*nyc(mh-k-tnid4y@t#a%f&'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['localhost']
+ALLOWED_HOSTS = ['localhost', '82.146.43.125', '82.146.62.243']
 
 CORS_ORIGIN_ALLOW_ALL = False
 CORS_ALLOW_CREDENTIALS = True
 
 CORS_ORIGIN_WHITELIST = (
     'localhost:4200',
+    '82.146.62.243',
 )
 
 # Application definition
@@ -86,8 +87,12 @@ AUTH_USER_MODEL = 'user.User'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': os.path.join(BASE_DIR, 'db.sqlite3'),
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': 'identity',
+        'USER' : 'identity',
+        'PASSWORD' : 'C!-liH*n^',
+        'HOST' : '127.0.0.1',
+        'PORT' : '5432',
     }
 }
 
