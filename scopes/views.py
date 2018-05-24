@@ -21,4 +21,4 @@ class ScopesView(APIView):
         data = dict(request.JSON)
         data['author'] = request.user
         scope = ScopeSerializer().create(data)
-        return Response(scope, status=200)
+        return Response(ScopeSerializer(scope).data, status=200)
