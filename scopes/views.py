@@ -18,6 +18,7 @@ class ScopesView(APIView):
 
     @staticmethod
     def post(request):
-        request.POST['author'] = request.user
-        scope = ScopeSerializer().create(request.POST)
+        data = dict(request.JSON.iterlists())
+        data['author'] = request.user
+        scope = ScopeSerializer().create(data)
         return Response(scope, status=200)
