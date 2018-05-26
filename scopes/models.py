@@ -26,7 +26,8 @@ class Scope(models.Model):
     back_url = models.URLField(_('Домен зоны'), max_length=255)
     hours_exp = models.PositiveSmallIntegerField(_('Часов до сгорания токена'), default=168)
     secret = models.UUIDField(default=uuid.uuid4, editable=False, verbose_name="Внешний ключ", unique=True)
-    icon = models.ImageField(_('Иконка зоны'), upload_to='scopes/icon', blank=True, null=True)
+    icon = models.ImageField(_('Иконка зоны'), upload_to='scopes/icon', blank=True, null=True,
+        width_field=1200, height_field=800)
 
     def get_exp(self, user):
         return (datetime.now() + timedelta(hours=self.hours_exp)).replace(tzinfo=timezone.utc)
