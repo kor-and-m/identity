@@ -23,8 +23,8 @@ class LoginView(APIView):
 
     @staticmethod
     def post(request):
-        password = request.JSON.get('password', None)
-        email = request.JSON.get('email', None)
+        password = request.POST.get('password', None)
+        email = request.POST.get('email', None)
 
         if email is None:
             return Response("Не передан email", status=400)
@@ -115,8 +115,8 @@ class RegistrationView(APIView):
 
     @staticmethod
     def post(request):
-        email = request.JSON.get('email', None)
-        password = request.JSON.get('password', None)
+        email = request.POST.get('email', None)
+        password = request.POST.get('password', None)
 
         if email is None:
             return Response('email не передан', status=400)
