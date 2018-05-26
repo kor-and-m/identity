@@ -22,7 +22,7 @@ class ScopesView(APIView):
     @staticmethod
     def post(request):
         data = request.POST.dict()
-        data['icon'] = request.FILES.get(icon)
+        data['icon'] = request.FILES.get('icon')
         data['author'] = request.user
         scope = ScopeSerializer().create(data)
         return Response(ScopeSerializer(scope).data, status=200)
